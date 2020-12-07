@@ -1,4 +1,4 @@
-//Servo.cpp
+//servo.cpp
 //Code by Yutao Gu
 #include <servo.h>
 

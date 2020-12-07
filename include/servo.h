@@ -1,7 +1,7 @@
 //Servo.h
 //Code by Yutao Gu
-#ifndef _LONELYION_Servo_H
-#define _LONELYION_Servo_H
+#ifndef _LONELYION_SERVO_H
+#define _LONELYION_SERVO_H
 
 #include <Arduino.h>
 #include <esp32-hal-ledc.h>         //用ESP32的HAL库来做PWM输出

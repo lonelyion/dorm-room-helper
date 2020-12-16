@@ -16,6 +16,7 @@ public:
     void attach();
     void write_angle(uint8_t angle);
     void open_the_door();
+    inline uint16_t map(uint8_t);
 
 private:
     const static int MIN = 500;     //脉冲时间最小值

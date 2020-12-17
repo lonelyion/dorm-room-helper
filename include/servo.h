@@ -16,7 +16,7 @@ public:
     void attach();
     void write_angle(uint8_t angle);
     void open_the_door();
-    inline uint16_t map(uint8_t);
+    uint16_t map(uint8_t angle);    //将角度转换为PWM微秒值
 
 private:
     const static int MIN = 500;     //脉冲时间最小值
@@ -26,7 +26,6 @@ private:
 
     uint8_t pin = 26;               //Servo连接到的GPIO端口
     uint8_t channel = 0;            //HAL库用的channel，默认为0
-    uint16_t map(uint8_t angle);    //将角度转换为PWM微秒值
 };
 
 #endif

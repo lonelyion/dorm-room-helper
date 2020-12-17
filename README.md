@@ -29,6 +29,9 @@
 #define _WIFI_SSID "ssid"
 #define _WIFI_PASSWORD "password"
 
+//是否开启夜间省电（默认00:30~07:00）
+#define _ENABLE_SLEEP true
+
 #endif
 ```
 

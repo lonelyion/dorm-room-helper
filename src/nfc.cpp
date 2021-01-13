@@ -9,7 +9,7 @@ bool NfcReader::is_equal(const std::vector<uint8_t> &mv, const uint8_t ma[], con
     return true;
 }
 
-NfcReader::NfcReader(bool debug) : show_debug_info(debug), allow_list(_ALLOW_LIST), allow_list_length(allow_list.size()) {
+NfcReader::NfcReader(bool debug, uint8_t mrt) : show_debug_info(debug), max_retry_time(mrt), allow_list(_ALLOW_LIST), allow_list_length(allow_list.size()) {
     hsu = new PN532_HSU(Serial2);
     nfc = new PN532(*hsu);
 
@@ -37,7 +37,7 @@ bool NfcReader::initialize() {
         delay(10000);
         //delete hsu;
         //delete nfc;
-        if(retry_time <= 5) {
+        if(retry_time <= max_retry_time) {
             ++retry_time;
             goto retry;
         } else {

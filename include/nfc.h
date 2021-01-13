@@ -14,7 +14,7 @@
 //协议采用High Speed UART(HSU)
 class NfcReader {
 public:
-    NfcReader(bool d = false);              //构造函数，bool值为是否输出调试信息
+    NfcReader(bool d = false, uint8_t mrt = 5);              //构造函数，bool值为是否输出调试信息
     bool initialize();                      //初始化，true则连接成功
     void print_version_data();              //输出NFC模组信息
     bool read_and_check_match();            //需要循环执行的函数，返回读取到的NFC卡UID是否为allow_list上面的
@@ -23,6 +23,7 @@ private:
     static bool is_equal(const std::vector<uint8_t> &mv, const uint8_t ma[], const uint8_t &len);
 
     bool show_debug_info = false;
+    uint8_t max_retry_time = 5;
     PN532_HSU *hsu;
     PN532 *nfc;
     uint32_t versiondata;

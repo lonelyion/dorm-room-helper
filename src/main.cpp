@@ -1,3 +1,4 @@
+//System Headers
 #include <Arduino.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
@@ -6,12 +7,16 @@
 #include <string>
 #include <time.h>
 
-#include <servo.h>
-#include <nfc.h>
-#include <secrets.h>
+//Custom Headers
+#include "servo.h"
+#include "nfc.h"
+#include "ir-remote.h"
+#include "secrets.h"
 
+//Modules
 Servo *servo;
 NfcReader *nfc;
+ir_remote *remote;
 
 const std::string sleep_time = "00:30";
 const std::string wake_time = "07:00";
@@ -21,7 +26,6 @@ inline bool check_time(const std::string&, const std::string&, const std::string
 
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);   //串口输出，波特率115200
   
   //连接WiFi并进行时间同步
@@ -50,14 +54,18 @@ void setup() {
 
   // NFC
   Serial.println("Setting up PN532 NFC module...");
-  nfc = new NfcReader(true);    //开启debug输出
+  nfc = new NfcReader(true, 3);    //开启debug输出
   bool nfc_status = nfc->initialize();
   if(!nfc_status) {
     Serial.println("Failed to set up PN532, please check the connection.");
-    while(1) {  }   //失败了就不要往下执行了
+    //while(1) {  }   //失败了就不要往下执行了
   }
   Serial.println("Finished setting up NFC module.");
   nfc->print_version_data();
+
+  // 红外空调遥控，接收来自串口的指令
+  remote = new ir_remote(25);
+  remote->set_value(true, true, 23, 1, 0);
 
   //OTA module
   ArduinoOTA
@@ -88,7 +96,7 @@ void setup() {
 
   ArduinoOTA.begin();
 
-  Serial.println("Ready");
+  Serial.println("OTA Ready");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
@@ -109,14 +117,29 @@ bool check_time(const std::string &now, const std::string &low, const std::strin
 
 void loop() {
   ArduinoOTA.handle();
+
+  // 夜间省电，不响应NFC信号
   if(_ENABLE_SLEEP) {
     while(check_time(get_time_string(), sleep_time, wake_time)) {
       delay(10000);
       return;
     }
   }
+  // 尝试读取NFC ID并与放行名单比对
   if(nfc->read_and_check_match()) {
     servo->open_the_door();
   }
+
+  //接收到了空调指令并发送红外信号
+  while(Serial.available() > 0) {
+    String cmd = Serial.readString();
+    int p, s, t, m, ws;
+    if(sscanf(cmd.c_str(), "%d %d %d %d %d", &p, &s, &t, &m, &ws) == 5) {
+      remote->set_value(p, s, t, m, ws);
+      remote->send_signal();
+      Serial.printf("Received and sent : %d %d %d %d %d\n", p, s, t, m, ws);
+    }
+  }
+
   delay(500);
 }

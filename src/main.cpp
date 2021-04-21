@@ -16,18 +16,16 @@
 #include "nfc.h"
 #include "secrets.h"
 #include "servo.h"
+#include "pins.h"
 
 //Modules
-Servo *servo;
-NfcReader *nfc;
-ir_remote *remote;
+Servo servo(SERVO_PIN);
+NfcReader nfc(true);
+ir_remote remote(IR_PIN);
 WebBackend *backend;
-DHTesp dhtSensor1;
-TempAndHumidity sensor1Data;
+DHTesp sensor;
+TempAndHumidity sensor_data;
 
-//Pins
-const uint8_t SERVO_PIN = 27;
-const uint8_t IR_PIN = 13;
 
 const std::string sleep_time = "00:30";
 const std::string wake_time = "07:00";
@@ -64,25 +62,25 @@ void setup() {
 
   // 电机
   Serial.println("Setting up Servo...");
-  servo = new Servo(SERVO_PIN);  //伺服电机实例
-  servo->attach();
-  servo->write_angle(0);
+  servo.attach();
+  servo.write_angle(0);
   Serial.println("Finished setting up Servo.");
 
   // NFC
   Serial.println("Setting up PN532 NFC module...");
-  nfc = new NfcReader(true, 3);  //开启debug输出
-  bool nfc_status = nfc->initialize();
+  bool nfc_status = nfc.initialize();
   if (!nfc_status) {
     Serial.println("Failed to set up PN532, please check the connection.");
     //while(1) {  }   //失败了就不要往下执行了
   }
   Serial.println("Finished setting up NFC module.");
-  nfc->print_version_data();
+  nfc.print_version_data();
 
   // 红外空调遥控，接收来自串口的指令
-  remote = new ir_remote(IR_PIN);
-  remote->set_value(true, true, 23, 1, 0);
+  remote.set_value(true, true, 23, 1, 0);
+
+  // 温湿度传感器
+  sensor.setup(SENSOR_PIN, DHTesp::DHT11);
 
   //OTA module
   ArduinoOTA
@@ -121,12 +119,10 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  backend = new WebBackend(80);
+  backend = new WebBackend(BACKEND_PORT);
   backend->begin();
 
-  pinMode(26, OUTPUT);
-
-  dhtSensor1.setup(14, DHTesp::DHT11);
+  pinMode(TEST_LED_PIN, OUTPUT);
 }
 
 std::string get_time_string() {
@@ -153,10 +149,9 @@ void loop() {
     }
   }
   // 尝试读取NFC ID并与放行名单比对
-  if (nfc->read_and_check_match()) {
-    servo->open_the_door();
-    led_status = !led_status;
-    digitalWrite(26, led_status);
+  if (nfc.read_and_check_match()) {
+    servo.open_the_door();
+    digitalWrite(TEST_LED_PIN, (led_status = !led_status));
   }
 
   //接收到了空调指令并发送红外信号
@@ -164,26 +159,14 @@ void loop() {
     String cmd = Serial.readString();
     int p, s, t, m, ws;
     if (sscanf(cmd.c_str(), "%d %d %d %d %d", &p, &s, &t, &m, &ws) == 5) {
-      remote->set_value(p, s, t, m, ws);
-      remote->send_signal();
+      remote.set_value(p, s, t, m, ws);
+      remote.send_signal();
       Serial.printf("Received and sent : %d %d %d %d %d\n", p, s, t, m, ws);
     }
   }
 
   delay(500);
-  sensor1Data = dhtSensor1.getTempAndHumidity();
-  Serial.println("Temp: " + String(sensor1Data.temperature,2) + "'C Humidity: " + String(sensor1Data.humidity,1) + "%");
+  //sensor_data = sensor.getTempAndHumidity();
+  //Serial.println("Temp: " + String(sensor_data.temperature,2) + "'C Humidity: " + String(sensor_data.humidity,1) + "%");
 }
 
-/*
-void WebBackend::request_led(AsyncWebServerRequest *request) {
-  pinMode(2, OUTPUT);
-  led_status = !led_status;
-  digitalWrite(2, led_status);
-  if (led_status) {
-    request->send(200, "text/plain", "The LED is ON");
-  } else {
-    request->send(200, "text/plain", "The LED is OFF");
-  }
-}
-*/

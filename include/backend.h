@@ -12,8 +12,8 @@ class WebBackend {
   WebBackend(uint16_t p);
 
   //These request handlers will implement in main.cpp
-  void request_led(AsyncWebServerRequest *request) {}
-  void request_temp(AsyncWebServerRequest *request) {}
+  void request_led(AsyncWebServerRequest *request);
+  void request_sensor(AsyncWebServerRequest *request);
   void request_aircon(AsyncWebServerRequest *request) {}
 
   void begin();

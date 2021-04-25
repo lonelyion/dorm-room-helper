@@ -1,17 +1,17 @@
-#include "ir-remote.h"
+#include "ac-remote.h"
 
-ir_remote::ir_remote() {
+ACRemote::ACRemote() {
   pinMode(ir_pin, OUTPUT);
 }
 
-ir_remote::ir_remote(uint8_t pin, uint16_t f, double dc, uint16_t op, uint16_t os, uint16_t zp, uint16_t zs)
+ACRemote::ACRemote(uint8_t pin, uint16_t f, double dc, uint16_t op, uint16_t os, uint16_t zp, uint16_t zs)
     : ir_pin(pin), frequency(f), duty_cycle(dc), one_pulse(op), one_space(os), zero_pulse(zs), zero_space(zs) {
   uint16_t khz = frequency / 1000;
   period_time_us = (1000U + khz / 2) / khz;  //= 1000/khz + 1/2 = round(1000.0/khz)
   pinMode(ir_pin, OUTPUT);
 }
 
-void ir_remote::set_value(bool power, bool swing, uint8_t temperature, uint8_t mode, uint8_t wind_speed) {
+void ACRemote::set_value(bool power, bool swing, uint8_t temperature, uint8_t mode, uint8_t wind_speed) {
   status.power = power;
   status.swing = swing;
   status.temperature = temperature;
@@ -19,11 +19,11 @@ void ir_remote::set_value(bool power, bool swing, uint8_t temperature, uint8_t m
   status.wind_speed = wind_speed;
 }
 
-ac_status& ir_remote::get_ref() {
-  return status;
+void ACRemote::set_value(ac_status s) {
+  this->status = s;
 }
 
-std::vector<uint16_t> ir_remote::convert() {
+std::vector<uint16_t> ACRemote::convert() {
   // PART 1: 构造状态对应的字节，这部分可根据不同的空调型号进行调整
   const uint8_t len = 14;
   uint8_t construct[len];
@@ -61,15 +61,12 @@ std::vector<uint16_t> ir_remote::convert() {
       break;
   }
   // 开关：关0开1
-  switch (status.power) {
-    case 1:
-      construct[4] |= 0b01000000;
-      construct[12] = 0b10000101;
-      break;
-    default:
-      construct[4] |= 0b00000000;
-      construct[12] = 0b10000101;
-      break;
+  if (status.power) {
+    construct[4] |= 0b01000000;
+    construct[12] = 0b10000101;
+  } else {
+    construct[4] |= 0b00000000;
+    construct[12] = 0b10000101;
   }
   // 校验和
   for (int i = 0; i < 13; ++i) {
@@ -127,8 +124,10 @@ std::vector<uint16_t> ir_remote::convert() {
   return time_seq;
 }
 
-void ir_remote::send_signal() {
+void ACRemote::send_signal() {
+  Serial.printf("%d %d %d %d %d\n", status.power, status.mode, status.temperature, status.swing, status.wind_speed);
   std::vector<uint16_t> ts = convert();
+  Serial.println("Convert ended");
   size_t len = ts.size();
   for (size_t i = 0; i < len; i++) {
     if (i % 2 == 0) {
@@ -137,9 +136,10 @@ void ir_remote::send_signal() {
       space(ts[i]);
     }
   }
+  Serial.println("Send Signal ended");
 }
 
-void ir_remote::pulse(uint16_t us) {
+void ACRemote::pulse(uint16_t us) {
   if (us == 0) return;
   auto now = micros();
   while (micros() - now < us) {
@@ -150,7 +150,7 @@ void ir_remote::pulse(uint16_t us) {
   }
 }
 
-void ir_remote::space(uint16_t us) {
+void ACRemote::space(uint16_t us) {
   if (us == 0) return;
   while (us > 16383) {
     delayMicroseconds(16383);

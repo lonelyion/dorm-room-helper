@@ -14,12 +14,12 @@ struct ac_status {
   uint8_t wind_speed;
 };
 
-class ir_remote {
+class ACRemote {
  public:
   /**
      * Default constructor
     */
-  ir_remote();
+  ACRemote();
   /**
      * Constructor
      * @param pin The IO pin of infrared LED
@@ -30,8 +30,8 @@ class ir_remote {
      * @param zp The duration of a pulse in microseconds when sending a logical 0
      * @param zs The duration of the gap/space in microseconds when sending a logical 0
     */
-  ir_remote(uint8_t pin,
-            uint16_t f = 38000, double dc = 0.5,
+  ACRemote(uint8_t pin,
+            uint16_t f = 38000, double dc = 0.6,
             uint16_t op = 562, uint16_t os = 1688,
             uint16_t zp = 562, uint16_t zs = 562);
   /**
@@ -44,14 +44,15 @@ class ir_remote {
      * @return The result of set operation
     */
   void set_value(bool power, bool swing, uint8_t temperature, uint8_t mode, uint8_t wind_speed);
-  /**
-     * Get a reference of air-conditioner's status
-    */
-  ac_status& get_ref();
+  void set_value(ac_status);
   /**
      * Send Infrared Signals to the air-conditioner
     */
   void send_signal();
+
+
+  ac_status status;
+  bool send_flag = false;
 
  protected:
   /**
@@ -78,8 +79,6 @@ class ir_remote {
 
   //
   uint32_t period_time_us = 0;
-
-  ac_status status;
 
   void pulse(uint16_t us);
   void space(uint16_t us);

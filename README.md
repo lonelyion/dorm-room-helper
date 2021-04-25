@@ -1,6 +1,6 @@
-# ESP32-Unlock-Door
+# dorm-room-helper
 
-这是一个用来控制宿舍门禁的程序，硬件基于ESP32 + PN532.
+可交互宿舍门禁与电器安全使用管理系统，硬件基于ESP32.
 
 ## Dependencies
 

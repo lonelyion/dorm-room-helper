@@ -12,7 +12,7 @@
 
 //Custom Headers
 #include "backend.h"
-#include "ir-remote.h"
+#include "ac-remote.h"
 #include "nfc.h"
 #include "secrets.h"
 #include "servo.h"
@@ -21,7 +21,7 @@
 //Modules
 Servo servo(SERVO_PIN);
 NfcReader nfc(true);
-ir_remote remote(IR_PIN);
+ACRemote remote(IR_PIN);
 WebBackend *backend;
 DHTesp sensor;
 TempAndHumidity sensor_data;
@@ -151,10 +151,10 @@ void loop() {
   // 尝试读取NFC ID并与放行名单比对
   if (nfc.read_and_check_match()) {
     servo.open_the_door();
-    digitalWrite(TEST_LED_PIN, (led_status = !led_status));
   }
 
   //接收到了空调指令并发送红外信号
+  /*
   while (Serial.available() > 0) {
     String cmd = Serial.readString();
     int p, s, t, m, ws;
@@ -164,8 +164,16 @@ void loop() {
       Serial.printf("Received and sent : %d %d %d %d %d\n", p, s, t, m, ws);
     }
   }
+  */
+
+  if(remote.send_flag == true) {
+    Serial.println("Remote Flag detected");
+    remote.send_signal();
+    remote.send_flag = false;
+  }
 
   delay(500);
+  remote.send_signal();
   //sensor_data = sensor.getTempAndHumidity();
   //Serial.println("Temp: " + String(sensor_data.temperature,2) + "'C Humidity: " + String(sensor_data.humidity,1) + "%");
 }

@@ -1,10 +1,10 @@
 #ifndef _PINS_H
 #define _PINS_H
 
-#define SERVO_PIN       27
-#define IR_PIN          25
-#define SENSOR_PIN      14
-#define TEST_LED_PIN    26
+#define SERVO_PIN       12
+#define IR_PIN          13
+#define SENSOR_PIN      18
+#define TEST_LED_PIN    15
 
 #define BACKEND_PORT    80
 

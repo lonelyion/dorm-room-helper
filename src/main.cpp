@@ -1,6 +1,6 @@
 //System Headers
 #include <Arduino.h>
-#include <ArduinoOTA.h>
+//#include <ArduinoOTA.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 #include <WiFi.h>
@@ -53,36 +53,40 @@ void setup() {
     //ESP.restart();
   }
   Serial.println(" Connected.");
-  configTime(28800, 0, "ntp.aliyun.com");  //GMT+8, 无夏令时, 路由器的NTP服务端
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
-  }
-  Serial.println("Synchornized time info from NTP.");
+  //configTime(28800, 0, "ntp.aliyun.com");  //GMT+8, 无夏令时, 路由器的NTP服务端
+  //struct tm timeinfo;
+  //if (!getLocalTime(&timeinfo)) {
+  //  Serial.println("Failed to obtain time");
+  //}
+  //Serial.println("Synchornized time info from NTP.");
 
   // 电机
   Serial.println("Setting up Servo...");
+  pinMode(11, OUTPUT);
+  digitalWrite(11, HIGH);
   servo.attach();
   servo.write_angle(0);
   Serial.println("Finished setting up Servo.");
+  
 
   // NFC
   Serial.println("Setting up PN532 NFC module...");
   bool nfc_status = nfc.initialize();
   if (!nfc_status) {
     Serial.println("Failed to set up PN532, please check the connection.");
-    //while(1) {  }   //失败了就不要往下执行了
+    while(1) {  }   //失败了就不要往下执行了
   }
   Serial.println("Finished setting up NFC module.");
   nfc.print_version_data();
 
   // 红外空调遥控，接收来自串口的指令
-  remote.set_value(true, true, 23, 1, 0);
+  //remote.set_value(true, true, 23, 0, 3);
 
   // 温湿度传感器
   sensor.setup(SENSOR_PIN, DHTesp::DHT11);
 
   //OTA module
+  /*
   ArduinoOTA
       .onStart([]() {
         String type;
@@ -114,6 +118,7 @@ void setup() {
       });
 
   ArduinoOTA.begin();
+  */
 
   Serial.println("OTA Ready");
   Serial.print("IP address: ");
@@ -121,8 +126,6 @@ void setup() {
 
   backend = new WebBackend(BACKEND_PORT);
   backend->begin();
-
-  pinMode(TEST_LED_PIN, OUTPUT);
 }
 
 std::string get_time_string() {
@@ -140,15 +143,10 @@ bool check_time(const std::string &now, const std::string &low, const std::strin
 }
 
 void loop() {
-  ArduinoOTA.handle();
-  // 夜间省电，不响应NFC信号
-  if (_ENABLE_SLEEP) {
-    while (check_time(get_time_string(), sleep_time, wake_time)) {
-      delay(10000);
-      //return;
-    }
-  }
-  // 尝试读取NFC ID并与放行名单比对
+  Serial.println("loop()");
+  //ArduinoOTA.handle();
+
+  //尝试读取NFC ID并与放行名单比对
   if (nfc.read_and_check_match()) {
     servo.open_the_door();
   }
@@ -165,15 +163,7 @@ void loop() {
     }
   }
   */
-
-  if(remote.send_flag == true) {
-    Serial.println("Remote Flag detected");
-    remote.send_signal();
-    remote.send_flag = false;
-  }
-
   delay(500);
-  remote.send_signal();
   //sensor_data = sensor.getTempAndHumidity();
   //Serial.println("Temp: " + String(sensor_data.temperature,2) + "'C Humidity: " + String(sensor_data.humidity,1) + "%");
 }

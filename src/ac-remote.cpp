@@ -101,7 +101,7 @@ std::vector<uint16_t> ACRemote::convert() {
         }
         */
 
-    /* HSB 写法 */
+    /* MSB 写法 */
     for (uint8_t mask = 0b10000000; mask != 0; mask = (mask >> 1)) {
       if ((construct[i] & mask) == 0) {
         time_seq.push_back(zero_pulse);
@@ -127,7 +127,7 @@ std::vector<uint16_t> ACRemote::convert() {
 void ACRemote::send_signal() {
   Serial.printf("%d %d %d %d %d\n", status.power, status.mode, status.temperature, status.swing, status.wind_speed);
   std::vector<uint16_t> ts = convert();
-  Serial.println("Convert ended");
+  //Serial.println("Convert ended");
   size_t len = ts.size();
   for (size_t i = 0; i < len; i++) {
     if (i % 2 == 0) {
@@ -144,10 +144,13 @@ void ACRemote::pulse(uint16_t us) {
   auto now = micros();
   while (micros() - now < us) {
     digitalWrite(ir_pin, HIGH);
-    delayMicroseconds(period_time_us * duty_cycle - 6);
-    digitalWrite(ir_pin, LOW);
-    delayMicroseconds(period_time_us * (1 - duty_cycle) - 7);
+    //delayMicroseconds(period_time_us * duty_cycle - 6);
+    //delayMicroseconds(period_time_us - 6);
+    //digitalWrite(ir_pin, LOW);
+    //delayMicroseconds(period_time_us * (1 - duty_cycle) - 7);
+    //delayMicroseconds(period_time_us - 7);
   }
+  digitalWrite(ir_pin, LOW);
 }
 
 void ACRemote::space(uint16_t us) {

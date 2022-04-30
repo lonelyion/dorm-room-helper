@@ -33,8 +33,12 @@ void WebBackend::request_led(AsyncWebServerRequest *request) {
   if (request->method() == HTTP_GET) {
     // GET led status
     doc["status"] = led_status ? "on" : "off";
-  } else if (request->method() == HTTP_POST && request->hasParam("switch", true)) {
+  } else if (request->method() == HTTP_POST) {
     // POST(Set) led status
+    if(request->hasParam("switch", true) == false) {
+      Serial.print("No switch param");
+      
+    }
     AsyncWebParameter *p = request->getParam("switch", true);
 
     if (p->value() == "on") {
